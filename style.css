@@ -142,26 +142,16 @@ h1 {
 /* Results Container (Grid) */
 .results-container {
   display: grid;
-  grid-template-columns: 1fr;
-  /* Mobile default */
+  /* Auto-fit columns: nice minimum width, stretch to fill */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
   width: 100%;
 }
 
-@media (min-width: 768px) {
-  .results-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (min-width: 1200px) {
-  .results-container {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
   .container {
     max-width: 1400px;
-    /* Expand container to fit 4 columns nicely */
+    /* Keep container expansion for large screens */
   }
 }
 
