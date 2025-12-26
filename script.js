@@ -525,8 +525,9 @@ downloadAllBtn.addEventListener('click', () => {
  */
 function updateLogoPreviewUI() {
     if (STATE.customLogo.image) {
-        // 顯示 Logo 預覽圖片
-        logoPreview.innerHTML = `<img src="${STATE.customLogo.image.src}" alt="Logo Preview">`;
+        // 顯示 Logo 預覽圖片（套用透明度效果）
+        const opacity = STATE.customLogo.opacity;
+        logoPreview.innerHTML = `<img src="${STATE.customLogo.image.src}" alt="Logo Preview" style="opacity: ${opacity}">`;
         logoPreview.classList.add('has-logo');
         logoOpacityGroup.style.display = 'block';
         clearLogoBtn.style.display = 'flex';
@@ -586,6 +587,13 @@ logoOpacity.addEventListener('input', (e) => {
     const value = parseInt(e.target.value);
     STATE.customLogo.opacity = value / 100;
     logoOpacityValue.textContent = `${value}%`;
+
+    // 即時更新 Logo 預覽的透明度
+    const previewImg = logoPreview.querySelector('img');
+    if (previewImg) {
+        previewImg.style.opacity = STATE.customLogo.opacity;
+    }
+
     reprocessAllImages();
 });
 
