@@ -117,12 +117,11 @@ body.has-files .app-card {
 .drop-zone {
   border: 2px dashed var(--border-color);
   border-radius: 1rem;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   background-color: rgba(255, 255, 255, 0.02);
-  margin-top: 1rem;
 }
 
 .drop-zone:hover,
