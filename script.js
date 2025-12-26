@@ -118,7 +118,7 @@ class ImageProcessor {
                     </div>
                     <div class="control-group slider-group">
                         <label>強度調整: <span class="alpha-value">1.0</span></label>
-                        <input type="range" min="0.5" max="1.5" step="0.05" value="1.0">
+                        <input type="range" min="1.0" max="3.0" step="0.1" value="1.0">
                     </div>
                 </div>
 
