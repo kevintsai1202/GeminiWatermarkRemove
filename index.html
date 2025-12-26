@@ -36,6 +36,42 @@
                 </button>
             </div>
 
+            <!-- 自訂 Logo 設定區塊 -->
+            <div id="logoSettings" class="logo-settings">
+                <div class="logo-header">
+                    <span class="logo-title">🎨 自訂 Logo（選填）</span>
+                    <button id="clearLogoBtn" class="btn btn-small btn-secondary" style="display: none;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        清除 Logo
+                    </button>
+                </div>
+
+                <div class="logo-content">
+                    <!-- Logo 預覽/上傳區域 -->
+                    <div id="logoUploadArea" class="logo-upload-area">
+                        <div id="logoPreview" class="logo-preview">
+                            <svg class="upload-icon" width="32" height="32" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            <span class="upload-text">點擊上傳 Logo</span>
+                        </div>
+                        <input type="file" id="logoInput" class="hidden" accept="image/*">
+                    </div>
+
+                    <!-- Logo 透明度設定 -->
+                    <div id="logoOpacityGroup" class="logo-opacity-group" style="display: none;">
+                        <label>Logo 透明度: <span id="logoOpacityValue">80%</span></label>
+                        <input type="range" id="logoOpacity" min="0" max="100" value="80">
+                    </div>
+                </div>
+            </div>
+
             <!-- Drop Zone / Result Container Wrapper -->
             <div id="dropZone" class="drop-zone">
                 <!-- Results Grid -->

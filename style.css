@@ -220,6 +220,127 @@ body.has-files .app-card {
   /* Space below button */
 }
 
+/* Logo Settings */
+.logo-settings {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.logo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.logo-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.logo-content {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logo-upload-area {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logo-preview {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--border-color);
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: all 0.3s ease;
+  /* 棋盤格背景顯示透明度 */
+  background-image:
+    linear-gradient(45deg, #1f2329 25%, transparent 25%),
+    linear-gradient(-45deg, #1f2329 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1f2329 75%),
+    linear-gradient(-45deg, transparent 75%, #1f2329 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+  background-color: #0f1115;
+  overflow: hidden;
+}
+
+.logo-preview:hover {
+  border-color: #7c3aed;
+  background-color: rgba(124, 58, 237, 0.1);
+}
+
+.logo-preview.has-logo {
+  border-style: solid;
+  border-color: var(--success-color);
+}
+
+.logo-preview.has-logo:hover {
+  border-color: #7c3aed;
+}
+
+.logo-preview .upload-icon {
+  color: var(--text-secondary);
+}
+
+.logo-preview .upload-text {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.logo-opacity-group {
+  flex: 1;
+  min-width: 150px;
+  max-width: 300px;
+}
+
+.logo-opacity-group label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.logo-opacity-group #logoOpacityValue {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.logo-opacity-group input[type="range"] {
+  width: 100%;
+}
+
+.btn-small {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 0.5rem;
+}
+
+.btn-small svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 /* Results Container (Grid) */
 .results-container {
   display: grid;

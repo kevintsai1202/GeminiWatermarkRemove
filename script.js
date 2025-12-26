@@ -7,7 +7,11 @@ const STATE = {
         small: null, // { width: 48, height: 48, alphas: Float32Array }
         large: null  // { width: 96, height: 96, alphas: Float32Array }
     },
-    processors: [] // Store active ImageProcessor instances
+    processors: [], // Store active ImageProcessor instances
+    customLogo: {
+        image: null,     // HTMLImageElement - 使用者上傳的 Logo 圖片
+        opacity: 0.8     // 0.0 ~ 1.0 - Logo 透明度
+    }
 };
 
 // Global DOM Elements
@@ -16,6 +20,15 @@ const fileInput = document.getElementById('fileInput');
 const resultsContainer = document.getElementById('resultsContainer');
 const globalActions = document.getElementById('globalActions');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+// Logo 相關 DOM 元素
+const logoInput = document.getElementById('logoInput');
+const logoPreview = document.getElementById('logoPreview');
+const logoUploadArea = document.getElementById('logoUploadArea');
+const logoOpacity = document.getElementById('logoOpacity');
+const logoOpacityValue = document.getElementById('logoOpacityValue');
+const logoOpacityGroup = document.getElementById('logoOpacityGroup');
+const clearLogoBtn = document.getElementById('clearLogoBtn');
 
 // =============================================================================
 // Initialization & Asset Loading
@@ -285,15 +298,63 @@ class ImageProcessor {
             // Remove Watermark
             this.removeWatermark(imageData);
 
-            // Put Back
+            // Put Back (after watermark removal)
             this.elements.ctx.putImageData(imageData, 0, 0);
 
+            // 疊加自訂 Logo（如果有設定的話）
+            this.applyCustomLogo();
+
+            // 重新取得最終 ImageData（包含 Logo）
+            const finalImageData = this.elements.ctx.getImageData(0, 0, canvas.width, canvas.height);
+
             // Update State
-            this.state.processedImageData = imageData;
+            this.state.processedImageData = finalImageData;
             this.elements.loading.style.display = 'none';
             this.elements.downloadBtn.disabled = false;
 
         }, 50);
+    }
+
+    /**
+     * 疊加自訂 Logo 到圖片右下角
+     * Logo 會自動縮放以配合浮水印大小，並套用透明度
+     */
+    applyCustomLogo() {
+        if (!STATE.customLogo.image) return;
+
+        const canvas = this.elements.canvas;
+        const ctx = this.elements.ctx;
+        const logo = STATE.customLogo.image;
+        const opacity = STATE.customLogo.opacity;
+
+        // 根據圖片尺寸決定 Logo 目標大小（與浮水印尺寸邏輯一致）
+        const w = canvas.width;
+        const h = canvas.height;
+        let mode = this.config.forceMode;
+        if (mode === 'auto') {
+            mode = (w > 1024 && h > 1024) ? 'large' : 'small';
+        }
+
+        // 設定 Logo 目標尺寸和邊距
+        const targetSize = mode === 'large' ? 96 : 48;
+        const margin = mode === 'large' ? 64 : 32;
+
+        // 計算縮放比例（保持寬高比）
+        const scale = Math.min(targetSize / logo.width, targetSize / logo.height);
+        const scaledWidth = logo.width * scale;
+        const scaledHeight = logo.height * scale;
+
+        // 計算位置（右下角，與浮水印相同位置）
+        const posX = w - margin - scaledWidth;
+        const posY = h - margin - scaledHeight;
+
+        if (posX < 0 || posY < 0) return;
+
+        // 設定透明度並繪製 Logo
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.drawImage(logo, posX, posY, scaledWidth, scaledHeight);
+        ctx.restore();
     }
 
     removeWatermark(imageData) {
@@ -432,8 +493,9 @@ dropZone.addEventListener('drop', (e) => {
 
 
 dropZone.addEventListener('click', (e) => {
-    // Prevent file dialog if clicking on results
-    if (e.target.closest('.results-container')) return;
+    // 點擊圖片卡片時不觸發上傳（保留卡片內的操作功能）
+    // 但點擊 results-container 的空白區域時仍可上傳新圖片
+    if (e.target.closest('.image-card')) return;
     fileInput.click();
 });
 
@@ -451,6 +513,90 @@ downloadAllBtn.addEventListener('click', () => {
         }, delay);
         delay += 300;
     });
+});
+
+// =============================================================================
+// Logo 上傳與處理邏輯
+// =============================================================================
+
+/**
+ * 更新 Logo 預覽 UI
+ * 根據 STATE.customLogo.image 是否存在來切換顯示狀態
+ */
+function updateLogoPreviewUI() {
+    if (STATE.customLogo.image) {
+        // 顯示 Logo 預覽圖片
+        logoPreview.innerHTML = `<img src="${STATE.customLogo.image.src}" alt="Logo Preview">`;
+        logoPreview.classList.add('has-logo');
+        logoOpacityGroup.style.display = 'block';
+        clearLogoBtn.style.display = 'flex';
+    } else {
+        // 恢復上傳提示
+        logoPreview.innerHTML = `
+            <svg class="upload-icon" width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="upload-text">點擊上傳 Logo</span>
+        `;
+        logoPreview.classList.remove('has-logo');
+        logoOpacityGroup.style.display = 'none';
+        clearLogoBtn.style.display = 'none';
+    }
+}
+
+/**
+ * 重新處理所有已上傳的圖片
+ * 當 Logo 或透明度變更時呼叫
+ */
+function reprocessAllImages() {
+    STATE.processors.forEach(p => {
+        p.processAndRender();
+    });
+}
+
+// Logo 上傳區域點擊事件
+logoUploadArea.addEventListener('click', () => {
+    logoInput.click();
+});
+
+// Logo 檔案選擇事件
+logoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            STATE.customLogo.image = img;
+            updateLogoPreviewUI();
+            reprocessAllImages();
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    // 重置 input 以便重複選擇同一檔案
+    logoInput.value = '';
+});
+
+// Logo 透明度滑桿變更事件
+logoOpacity.addEventListener('input', (e) => {
+    const value = parseInt(e.target.value);
+    STATE.customLogo.opacity = value / 100;
+    logoOpacityValue.textContent = `${value}%`;
+    reprocessAllImages();
+});
+
+// 清除 Logo 按鈕事件
+clearLogoBtn.addEventListener('click', () => {
+    STATE.customLogo.image = null;
+    STATE.customLogo.opacity = 0.8;
+    logoOpacity.value = 80;
+    logoOpacityValue.textContent = '80%';
+    updateLogoPreviewUI();
+    reprocessAllImages();
 });
 
 // =============================================================================
