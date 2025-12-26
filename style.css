@@ -59,6 +59,12 @@ h1 {
   margin: 0 auto;
 }
 
+/* Hide elements when files are present */
+body.has-files .subtitle,
+body.has-files .features-list {
+  display: none;
+}
+
 .features-list {
   margin-top: 1.5rem;
   display: flex;

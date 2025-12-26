@@ -191,8 +191,8 @@ class ImageProcessor {
         // Append to DOM
         resultsContainer.appendChild(card);
 
-        // Show Global Actions if tasks exist
-        globalActions.style.display = 'flex';
+        // Update UI State
+        updateUIState();
     }
 
     loadImage() {
@@ -323,10 +323,8 @@ class ImageProcessor {
         // Remove from Global List
         STATE.processors = STATE.processors.filter(p => p !== this);
 
-        // Hide Global Actions if empty
-        if (STATE.processors.length === 0) {
-            globalActions.style.display = 'none';
-        }
+        // Update UI State
+        updateUIState();
     }
 }
 
@@ -346,6 +344,18 @@ function handleFiles(fileList) {
 
     // Reset file input so same file can be selected again if needed
     fileInput.value = '';
+
+    updateUIState();
+}
+
+function updateUIState() {
+    if (STATE.processors.length > 0) {
+        document.body.classList.add('has-files');
+        globalActions.style.display = 'flex';
+    } else {
+        document.body.classList.remove('has-files');
+        globalActions.style.display = 'none';
+    }
 }
 
 // Drag & Drop
