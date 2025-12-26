@@ -481,6 +481,14 @@ footer a:hover {
   text-decoration: underline;
 }
 
+/* Utilities */
+.hidden {
+  display: none !important;
+}
+
+text-decoration: underline;
+}
+
 /* Lightbox */
 .lightbox {
   display: none;
