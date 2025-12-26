@@ -137,6 +137,8 @@ h1 {
 .global-actions {
   display: flex;
   padding: 0 1rem;
+  margin-bottom: 1rem;
+  /* Space below button */
 }
 
 /* Results Container (Grid) */
