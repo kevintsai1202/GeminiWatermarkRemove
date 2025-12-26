@@ -65,6 +65,16 @@ body.has-files .features-list {
   display: none;
 }
 
+/* Reduce header margin when files are present */
+body.has-files header {
+  margin-bottom: 0.5rem;
+}
+
+/* Reduce app-card padding when files are present */
+body.has-files .app-card {
+  padding-top: 1rem;
+}
+
 .features-list {
   margin-top: 1.5rem;
   display: flex;
@@ -143,7 +153,7 @@ body.has-files .features-list {
 .global-actions {
   display: flex;
   padding: 0 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.25rem;
   /* Space below button */
 }
 
