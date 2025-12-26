@@ -139,24 +139,44 @@ h1 {
   padding: 0 1rem;
 }
 
-/* Results Container (List) */
+/* Results Container (Grid) */
 .results-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  /* Mobile default */
+  gap: 1.5rem;
   width: 100%;
+}
+
+@media (min-width: 768px) {
+  .results-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .results-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .container {
+    max-width: 1400px;
+    /* Expand container to fit 4 columns nicely */
+  }
 }
 
 /* Image Card */
 .image-card {
   background-color: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  padding: 1.5rem;
+  border-radius: 0.75rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   animation: fadeIn 0.3s ease-out;
+  height: 100%;
+  /* Ensure consistent height in row */
 }
 
 @keyframes fadeIn {
@@ -185,42 +205,55 @@ h1 {
     linear-gradient(-45deg, transparent 75%, #1f2329 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-  min-height: 200px;
+  min-height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
+  aspect-ratio: 4 / 3;
+  /* Fixed aspect ratio wrapper */
 }
 
 .image-wrapper canvas {
   display: block;
   max-width: 100%;
-  max-height: 600px;
+  max-height: 100%;
+  width: auto;
   height: auto;
-  margin: 0 auto;
+  object-fit: contain;
 }
 
 /* Card Controls */
 .card-controls {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding-top: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--border-color);
+  margin-top: auto;
+  /* Push to bottom */
 }
 
 .card-options {
   display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
 }
 
 .control-group {
+  width: 100%;
+}
+
+.control-group select {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.slider-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .slider-group label {
@@ -229,9 +262,20 @@ h1 {
 }
 
 .slider-group input[type="range"] {
-  width: 150px;
-  cursor: pointer;
-  accent-color: #7c3aed;
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.actions .btn {
+  flex: 1;
+  justify-content: center;
+  padding: 0.5rem;
+  font-size: 0.9rem;
 }
 
 #alphaValue {
