@@ -7,6 +7,7 @@ const STATE = {
         small: null, // { width: 48, height: 48, alphas: Float32Array }
         large: null  // { width: 96, height: 96, alphas: Float32Array }
     },
+    worker: new Worker('worker.js'),
     processors: [], // Store active ImageProcessor instances
     customLogo: {
         image: null,     // HTMLImageElement - 使用者上傳的 Logo 圖片
@@ -38,12 +39,37 @@ const clearLogoBtn = document.getElementById('clearLogoBtn');
 // =============================================================================
 
 async function init() {
+    // Setup Worker Listener
+    STATE.worker.onmessage = (e) => {
+        const { type, payload, id } = e.data;
+        if (type === 'PROCESS_COMPLETE') {
+            const processor = STATE.processors.find(p => p.id === id);
+            if (processor) {
+                processor.handleWorkerResult(payload.imageData);
+            }
+        } else if (type === 'PROCESS_ERROR') {
+            console.error('Worker error:', payload);
+            const processor = STATE.processors.find(p => p.id === id);
+            if (processor) {
+                processor.elements.loading.style.display = 'none';
+                alert('Processing error: ' + payload);
+            }
+        }
+    };
+
     try {
         await Promise.all([
             loadMask('assets/mask_48.png', 'small'),
             loadMask('assets/mask_96.png', 'large')
         ]);
         console.log('Masks loaded successfully');
+
+        // Send masks to worker
+        STATE.worker.postMessage({
+            type: 'INIT_MASKS',
+            payload: STATE.masks
+        });
+
     } catch (e) {
         console.error('Failed to load masks:', e);
         alert('Failed to load watermark assets. Please check the console.');
@@ -139,6 +165,12 @@ class ImageProcessor {
                 </div>
 
                 <div class="actions" style="display: flex; gap: 1rem;">
+                    <button class="btn btn-secondary compare-btn" title="按住對比 (Toggle Compare)">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
                     <button class="btn btn-secondary remove-btn" title="移除圖片">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -167,6 +199,7 @@ class ImageProcessor {
         this.elements.alphaValue = card.querySelector('.alpha-value');
         this.elements.downloadBtn = card.querySelector('.download-btn');
         this.elements.removeBtn = card.querySelector('.remove-btn');
+        this.elements.compareBtn = card.querySelector('.compare-btn');
         this.elements.wrapper = card.querySelector('.image-wrapper');
 
         // Bind Events
@@ -190,12 +223,31 @@ class ImageProcessor {
             if (e && e.cancelable) e.preventDefault();
             if (!this.state.originalImage) return;
             this.elements.ctx.drawImage(this.state.originalImage, 0, 0);
+
+            // Add label
+            const label = document.createElement('div');
+            label.className = 'status-label';
+            label.textContent = 'Original';
+            this.elements.wrapper.appendChild(label);
         };
 
         const endCompare = () => {
             if (!this.state.processedImageData) return;
             this.elements.ctx.putImageData(this.state.processedImageData, 0, 0);
+
+            const label = this.elements.wrapper.querySelector('.status-label');
+            if (label) label.remove();
         };
+
+        // Manual Compare Button
+        this.elements.compareBtn.addEventListener('mousedown', startCompare);
+        this.elements.compareBtn.addEventListener('mouseup', endCompare);
+        this.elements.compareBtn.addEventListener('mouseleave', endCompare);
+        this.elements.compareBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startCompare(e);
+        }, { passive: false });
+        this.elements.compareBtn.addEventListener('touchend', endCompare);
 
         // Interaction Logic: Click vs Long Press
         let pressTimer;
@@ -298,24 +350,35 @@ class ImageProcessor {
             // Get Data
             const imageData = this.elements.ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-            // Remove Watermark
-            this.removeWatermark(imageData);
-
-            // Put Back (after watermark removal)
-            this.elements.ctx.putImageData(imageData, 0, 0);
-
-            // 疊加自訂 Logo（如果有設定的話）
-            this.applyCustomLogo();
-
-            // 重新取得最終 ImageData（包含 Logo）
-            const finalImageData = this.elements.ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-            // Update State
-            this.state.processedImageData = finalImageData;
-            this.elements.loading.style.display = 'none';
-            this.elements.downloadBtn.disabled = false;
+            // Send to Worker
+            STATE.worker.postMessage({
+                type: 'PROCESS_IMAGE',
+                payload: {
+                    imageData: imageData,
+                    config: this.config,
+                    id: this.id
+                }
+            }, [imageData.data.buffer]); // Transfer buffer
 
         }, 50);
+    }
+
+    handleWorkerResult(processedImageData) {
+        const canvas = this.elements.canvas;
+
+        // Put Back (after watermark removal)
+        this.elements.ctx.putImageData(processedImageData, 0, 0);
+
+        // 疊加自訂 Logo（如果有設定的話）
+        this.applyCustomLogo();
+
+        // 重新取得最終 ImageData（包含 Logo）
+        const finalImageData = this.elements.ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // Update State
+        this.state.processedImageData = finalImageData;
+        this.elements.loading.style.display = 'none';
+        this.elements.downloadBtn.disabled = false;
     }
 
     /**
@@ -358,63 +421,6 @@ class ImageProcessor {
         ctx.globalAlpha = opacity;
         ctx.drawImage(logo, posX, posY, scaledWidth, scaledHeight);
         ctx.restore();
-    }
-
-    removeWatermark(imageData) {
-        const w = imageData.width;
-        const h = imageData.height;
-
-        // 1. Determine configuration
-        let mode = this.config.forceMode;
-        if (mode === 'auto') {
-            if (w > 1024 && h > 1024) {
-                mode = 'large';
-            } else {
-                mode = 'small';
-            }
-        }
-
-        const mask = mode === 'large' ? STATE.masks.large : STATE.masks.small;
-        if (!mask) return;
-
-        const margin = mode === 'large' ? 64 : 32;
-        const posX = w - margin - mask.width;
-        const posY = h - margin - mask.height;
-
-        if (posX < 0 || posY < 0) return;
-
-        // 2. Process
-        const data = imageData.data;
-        const logoValue = 255.0;
-        const alphaThreshold = 0.002;
-        const maxAlpha = 0.99;
-        const gain = this.config.alphaGain;
-
-        for (let my = 0; my < mask.height; my++) {
-            for (let mx = 0; mx < mask.width; mx++) {
-                const iy = posY + my;
-                const ix = posX + mx;
-
-                if (ix >= w || iy >= h) continue;
-
-                const mIdx = my * mask.width + mx;
-                let alpha = mask.alphas[mIdx] * gain;
-
-                if (alpha < alphaThreshold) continue;
-                if (alpha > maxAlpha) alpha = maxAlpha;
-
-                const oneMinusAlpha = 1.0 - alpha;
-                const idx = (iy * w + ix) * 4;
-
-                for (let c = 0; c < 3; c++) {
-                    const currentVal = data[idx + c];
-                    let original = (currentVal - alpha * logoValue) / oneMinusAlpha;
-                    if (original < 0) original = 0;
-                    if (original > 255) original = 255;
-                    data[idx + c] = original;
-                }
-            }
-        }
     }
 
     download() {

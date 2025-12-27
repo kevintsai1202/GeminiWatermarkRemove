@@ -677,3 +677,19 @@ footer a:hover {
   text-decoration: none;
   cursor: pointer;
 }
+/* Status Label */
+.status-label {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(255, 50, 50, 0.8);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: fadeIn 0.2s ease;
+}
