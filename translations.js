@@ -35,7 +35,8 @@ const translations = {
         "formatLabel": "格式:",
         "formatPng": "PNG (無損)",
         "formatJpeg": "JPEG (壓縮)",
-        "zipFolderName": "gemini_去除浮水印"
+        "zipFolderName": "gemini_去除浮水印",
+        "autoLabel": "自動"
     },
     "zh-CN": {
         "appTitle": "Gemini 水印去除器",
@@ -73,7 +74,8 @@ const translations = {
         "formatLabel": "格式:",
         "formatPng": "PNG (无损)",
         "formatJpeg": "JPEG (压缩)",
-        "zipFolderName": "gemini_去除水印"
+        "zipFolderName": "gemini_去除水印",
+        "autoLabel": "自动"
     },
     "en": {
         "appTitle": "Gemini Watermark Remover",
@@ -111,7 +113,8 @@ const translations = {
         "formatLabel": "Format:",
         "formatPng": "PNG (Lossless)",
         "formatJpeg": "JPEG (Compressed)",
-        "zipFolderName": "gemini_clean"
+        "zipFolderName": "gemini_clean",
+        "autoLabel": "Auto"
     },
     "ja": {
         "appTitle": "Gemini 透かし除去ツール",
@@ -149,7 +152,8 @@ const translations = {
         "formatLabel": "形式:",
         "formatPng": "PNG (可逆)",
         "formatJpeg": "JPEG (圧縮)",
-        "zipFolderName": "gemini_透かし除去"
+        "zipFolderName": "gemini_透かし除去",
+        "autoLabel": "自動"
     },
     "ko": {
         "appTitle": "Gemini 워터마크 제거기",
@@ -187,6 +191,7 @@ const translations = {
         "formatLabel": "형식:",
         "formatPng": "PNG (무손실)",
         "formatJpeg": "JPEG (압축)",
-        "zipFolderName": "gemini_워터마크_제거"
+        "zipFolderName": "gemini_워터마크_제거",
+        "autoLabel": "자동"
     }
 };

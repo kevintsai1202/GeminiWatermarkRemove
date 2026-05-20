@@ -264,11 +264,13 @@ class ImageProcessor {
         this.id = Math.random().toString(36).substr(2, 9);
         this.config = {
             forceMode: 'auto',
-            alphaGain: 1.0
+            alphaGain: 0.5, // 浮水印強度增益，預設 0.5 適用最新 Gemini 浮水印
+            autoStrength: true // 是否開啟自動強度偵測
         };
         this.state = {
             originalImage: null,
             processedImageData: null,
+            watermarkRegion: null, // 儲存偵測到的浮水印位置與大小
             isProcessing: false
         };
 
@@ -306,8 +308,15 @@ class ImageProcessor {
                         </select>
                     </div>
                     <div class="control-group slider-group">
-                        <label><span data-i18n="strengthLabel">${Localization.get('strengthLabel')}</span> <span class="alpha-value">1.0</span></label>
-                        <input type="range" min="1.0" max="3.0" step="0.1" value="1.0">
+                        <label style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <span data-i18n="strengthLabel">${Localization.get('strengthLabel')}</span>
+                            <span style="display: flex; align-items: center; gap: 0.25rem;">
+                                <input type="checkbox" class="auto-strength-check" checked style="margin: 0; cursor: pointer; width: auto; height: auto;">
+                                <span data-i18n="autoLabel" style="font-size: 0.85rem; opacity: 0.9;">${Localization.get('autoLabel')}</span>
+                                <span class="alpha-value" style="font-weight: 600; min-width: 2rem; text-align: right;">Auto</span>
+                            </span>
+                        </label>
+                        <input type="range" min="0.1" max="3.0" step="0.1" value="0.5" disabled>
                     </div>
                 </div>
 
@@ -344,6 +353,7 @@ class ImageProcessor {
         this.elements.sizeSelect = card.querySelector('select');
         this.elements.alphaInput = card.querySelector('input[type="range"]');
         this.elements.alphaValue = card.querySelector('.alpha-value');
+        this.elements.autoStrengthCheck = card.querySelector('.auto-strength-check');
         this.elements.downloadBtn = card.querySelector('.download-btn');
         this.elements.removeBtn = card.querySelector('.remove-btn');
         this.elements.compareBtn = card.querySelector('.compare-btn');
@@ -353,6 +363,20 @@ class ImageProcessor {
         // Bind Events
         this.elements.sizeSelect.addEventListener('change', (e) => {
             this.config.forceMode = e.target.value;
+            this.processAndRender();
+        });
+
+        this.elements.autoStrengthCheck.addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            this.config.autoStrength = checked;
+            this.elements.alphaInput.disabled = checked;
+            if (checked) {
+                this.elements.alphaValue.textContent = 'Auto';
+            } else {
+                const val = parseFloat(this.elements.alphaInput.value);
+                this.config.alphaGain = val;
+                this.elements.alphaValue.textContent = val.toFixed(2);
+            }
             this.processAndRender();
         });
 
@@ -473,6 +497,7 @@ class ImageProcessor {
         this.elements.card.querySelector('[data-i18n="sizeSmall"]').textContent = l.get('sizeSmall');
         this.elements.card.querySelector('[data-i18n="sizeLarge"]').textContent = l.get('sizeLarge');
         this.elements.card.querySelector('[data-i18n="strengthLabel"]').textContent = l.get('strengthLabel');
+        this.elements.card.querySelector('[data-i18n="autoLabel"]').textContent = l.get('autoLabel');
         this.elements.card.querySelector('[data-i18n="downloadBtn"]').textContent = l.get('downloadBtn');
 
         // Titles
@@ -527,8 +552,16 @@ class ImageProcessor {
         }, 50);
     }
 
-    handleWorkerResult(processedImageData) {
+    handleWorkerResult(processedImageData, watermarkRegion, appliedGain) {
         const canvas = this.elements.canvas;
+        this.state.watermarkRegion = watermarkRegion || null;
+
+        // 如果是自動強度偵測，更新 UI 的 Label 和 Slider 值
+        if (this.config.autoStrength && appliedGain !== undefined) {
+            this.config.alphaGain = appliedGain;
+            this.elements.alphaValue.textContent = `Auto (${appliedGain.toFixed(2)})`;
+            this.elements.alphaInput.value = appliedGain;
+        }
 
         // Put Back (after watermark removal)
         this.elements.ctx.putImageData(processedImageData, 0, 0);
@@ -565,18 +598,19 @@ class ImageProcessor {
             mode = (w > 1024 && h > 1024) ? 'large' : 'small';
         }
 
-        // 設定 Logo 目標尺寸和邊距
-        const targetSize = mode === 'large' ? 96 : 48;
-        const margin = mode === 'large' ? 64 : 32;
+        // 設定 Logo 目標尺寸，優先沿用 worker 偵測到的浮水印區域
+        const region = this.state.watermarkRegion;
+        const targetSize = region ? Math.min(region.width, region.height) : (mode === 'large' ? 96 : 48);
+        const fallbackMargin = mode === 'large' ? 192 : 96;
 
         // 計算縮放比例（保持寬高比）
         const scale = Math.min(targetSize / logo.width, targetSize / logo.height) * STATE.customLogo.scale;
         const scaledWidth = logo.width * scale;
         const scaledHeight = logo.height * scale;
 
-        // 計算位置（右下角，與浮水印相同位置）
-        const posX = w - margin - scaledWidth;
-        const posY = h - margin - scaledHeight;
+        // 計算位置（與實際浮水印區域置中對齊）
+        const posX = region ? region.x + (region.width - scaledWidth) / 2 : w - fallbackMargin - scaledWidth;
+        const posY = region ? region.y + (region.height - scaledHeight) / 2 : h - fallbackMargin - scaledHeight;
 
         if (posX < 0 || posY < 0) return;
 
